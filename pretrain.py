@@ -87,6 +87,7 @@ def main(args):
     train_transform = TrainAugmentation(args.global_crops_scale, args.local_crops_scale, args.local_crops_number)
     val_transform = ValAugmentation(args.local_crops_scale, args.local_crops_number)
     data_root = args.data_folder
+    data_root = "/project/dl2022s/nassary/CV_ex/crops/images/256"
     train_data = DataReaderPlainImg(os.path.join(data_root, "train"), transform=train_transform)
     if args.dataset_size is not None:
         train_data = torch.utils.data.Subset(train_data, range(args.dataset_size))
