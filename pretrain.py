@@ -97,7 +97,7 @@ def main(args):
                                              pin_memory=True, drop_last=True)
     
     # ============ preparing loss ... ============
-      dino_loss = DINOLoss(
+    dino_loss = DINOLoss(
         args.out_dim,
         args.local_crops_number + 2,  # total number of crops = 2 global crops + local_crops_number
         args.warmup_teacher_temp,
