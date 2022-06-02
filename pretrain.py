@@ -78,7 +78,10 @@ def main(args):
     student, teacher = student.cuda(), teacher.cuda()    
     
     # there is no backpropagation through the teacher, so no need for gradients
-    raise NotImplementedError("TODO: load weight initialization")
+    for p in teacher.parameters():
+        p.requires_grad = False
+
+    # raise NotImplementedError("TODO: load weight initialization")
 
     # ============ preparing data ... ============
     train_transform = TrainAugmentation(args.global_crops_scale, args.local_crops_scale, args.local_crops_number)
@@ -94,7 +97,15 @@ def main(args):
                                              pin_memory=True, drop_last=True)
     
     # ============ preparing loss ... ============
-    raise NotImplementedError("TODO: load weight initialization")
+      dino_loss = DINOLoss(
+        args.out_dim,
+        args.local_crops_number + 2,  # total number of crops = 2 global crops + local_crops_number
+        args.warmup_teacher_temp,
+        args.teacher_temp,
+        args.warmup_teacher_temp_epochs,
+        args.epochs,
+    ).cuda()
+    # raise NotImplementedError("TODO: load weight initialization")
 
     # ============ preparing optimizer ... ============
     params_groups = get_params_groups(student)
@@ -158,7 +169,10 @@ def train(data_loader, t_model, s_model, criterion, optimizer, lr_schedule, wd_s
         images = [im.cuda(non_blocking=True) for im in images]
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):
-            raise NotImplementedError("TODO: load weight initialization")
+            teacher_output = teacher(images[:2])  # only the 2 global views pass through the teacher
+            student_output = student(images)
+            loss = dino_loss(student_output, teacher_output, epoch)
+            # raise NotImplementedError("TODO: load weight initialization")
         # student update
         optimizer.zero_grad()
         param_norms = None
@@ -167,7 +181,10 @@ def train(data_loader, t_model, s_model, criterion, optimizer, lr_schedule, wd_s
         fp16_scaler.update()
         # EMA update for the teacher
         with torch.no_grad():
-            raise NotImplementedError("TODO: load weight initialization")
+            m = momentum_schedule[it]  # momentum parameter
+            for param_q, param_k in zip(student.module.parameters(), teacher_without_ddp.parameters()):
+                param_k.data.mul_(m).add_((1 - m) * param_q.detach().data)
+            # raise NotImplementedError("TODO: load weight initialization")
         loss_meter.add(loss.item())
         if iteration % 100 == 0:
             if "PBS_JOBID" not in os.environ:
@@ -195,8 +212,8 @@ def validate(loader, t_model, s_model, criterion, epoch, args, log=None):
     raise NotImplementedError("TODO: load weight initialization")
     plt.figure(figsize=(16,10))
     sns.scatterplot(
-        x=feature_maps_embedded[:,0], 
-        y=feature_maps_embedded[:,1], 
+        x=feature_maps[:,0], 
+        y=feature_maps[:,1], 
         palette=sns.color_palette("hls", 1),
         legend="full",
         alpha=0.3
@@ -228,7 +245,10 @@ class DINOLoss(torch.nn.Module):
         student_out = student_out.chunk(self.ncrops)
 
         # teacher centering and sharpening
-        raise NotImplementedError("TODO: load weight initialization")
+        temp = self.teacher_temp_schedule[epoch]
+        teacher_out = F.softmax((teacher_output - self.center) / temp, dim=-1)
+        teacher_out = teacher_out.detach().chunk(2)
+        # raise NotImplementedError("TODO: load weight initialization")
 
         total_loss = 0
         n_loss_terms = 0
@@ -250,7 +270,9 @@ class DINOLoss(torch.nn.Module):
         """
         Update center used for teacher output.
         """
-        raise NotImplementedError("TODO: load weight initialization")
+        batch_center = torch.sum(teacher_output, dim=0, keepdim=True)
+        batch_center = batch_center / (len(teacher_output))
+        # raise NotImplementedError("TODO: load weight initialization")
 
         # ema update
         self.center = self.center * self.center_momentum + batch_center * (1 - self.center_momentum)
