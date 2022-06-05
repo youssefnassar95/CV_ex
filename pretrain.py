@@ -211,7 +211,7 @@ def validate(loader, t_model, s_model, criterion, epoch, args, log=None):
         feature_maps[2*idx:2*(idx+1), :] = t_model.backbone(torch.cat(images[:2],dim=0))
     print("Mean validation loss = {}".format(loss_meter.mean))
     log.add_scalar("validation_loss", loss_meter.mean, global_step)
-    raise NotImplementedError("TODO: load weight initialization")
+    # raise NotImplementedError("TODO: load weight initialization")
     plt.figure(figsize=(16,10))
     sns.scatterplot(
         x=feature_maps[:,0], 
