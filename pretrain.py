@@ -173,7 +173,7 @@ def train(data_loader, t_model, s_model, criterion, optimizer, lr_schedule, wd_s
         with torch.cuda.amp.autocast(fp16_scaler is not None):
             teacher_output = t_model(images[:2])  # only the 2 global views pass through the teacher
             student_output = s_model(images)
-            loss = dino_loss(student_output, teacher_output, epoch)
+            loss = criterion(student_output, teacher_output, epoch)
             # raise NotImplementedError("TODO: load weight initialization")
         # student update
         optimizer.zero_grad()
