@@ -184,7 +184,7 @@ def train(data_loader, t_model, s_model, criterion, optimizer, lr_schedule, wd_s
         # EMA update for the teacher
         with torch.no_grad():
             m = momentum_schedule[it]  # momentum parameter
-            for param_q, param_k in zip(student.module.parameters(), teacher_without_ddp.parameters()):
+            for param_q, param_k in zip(s_model.module.parameters(), teacher_without_ddp.parameters()):
                 param_k.data.mul_(m).add_((1 - m) * param_q.detach().data)
             # raise NotImplementedError("TODO: load weight initialization")
         loss_meter.add(loss.item())
